@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.reflections.Reflections;
 
+import com.geccocrawler.gecco.spider.render.file.FileRender;
 import com.geccocrawler.gecco.spider.render.html.HtmlRender;
 import com.geccocrawler.gecco.spider.render.json.JsonRender;
 
@@ -22,8 +23,12 @@ public abstract class RenderFactory {
 		AbstractRender jsonRender = createJsonRender();
 		jsonRender.setCustomFieldRenderFactory(customFieldRenderFactory);
 		
+		AbstractRender FileRender = createFileRender();
+		FileRender.setCustomFieldRenderFactory(customFieldRenderFactory);
+		
 		renders.put(RenderType.HTML, htmlRender);
 		renders.put(RenderType.JSON, jsonRender);
+		renders.put(RenderType.File, FileRender);
 	}
 	
 	public Render getRender(RenderType type) {
@@ -33,5 +38,7 @@ public abstract class RenderFactory {
 	public abstract HtmlRender createHtmlRender();
 	
 	public abstract JsonRender createJsonRender();
+	
+	public abstract FileRender createFileRender();
 	
 }

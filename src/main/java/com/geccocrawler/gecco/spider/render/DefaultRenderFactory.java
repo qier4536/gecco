@@ -2,6 +2,7 @@ package com.geccocrawler.gecco.spider.render;
 
 import org.reflections.Reflections;
 
+import com.geccocrawler.gecco.spider.render.file.FileRender;
 import com.geccocrawler.gecco.spider.render.html.HtmlRender;
 import com.geccocrawler.gecco.spider.render.json.JsonRender;
 
@@ -17,6 +18,10 @@ public class DefaultRenderFactory extends RenderFactory {
 	
 	public JsonRender createJsonRender() {
 		return new JsonRender();
+	}
+
+	public FileRender createFileRender() {
+		return new FileRender();
 	}
 	
 }

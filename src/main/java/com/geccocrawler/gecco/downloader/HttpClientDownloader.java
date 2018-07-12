@@ -52,31 +52,32 @@ import com.geccocrawler.gecco.request.HttpPostRequest;
 import com.geccocrawler.gecco.request.HttpRequest;
 import com.geccocrawler.gecco.response.HttpResponse;
 import com.geccocrawler.gecco.spider.SpiderThreadLocal;
+import com.geccocrawler.gecco.utils.ContentTypeUtils;
 import com.geccocrawler.gecco.utils.UrlUtils;
 
 /**
  * 利用httpclient下载
- *  
+ * 
  * @author huchengyi
  *
  */
 @com.geccocrawler.gecco.annotation.Downloader("httpClientDownloader")
 public class HttpClientDownloader extends AbstractDownloader {
-	
+
 	private static Log log = LogFactory.getLog(HttpClientDownloader.class);
-	
+
 	private CloseableHttpClient httpClient;
-	
+
 	private HttpClientContext cookieContext;
-	
+
 	public HttpClientDownloader() {
-		
+
 		cookieContext = HttpClientContext.create();
 		cookieContext.setCookieStore(new BasicCookieStore());
-		
+
 		Registry<ConnectionSocketFactory> socketFactoryRegistry = null;
 		try {
-			//构造一个信任所有ssl证书的httpclient
+			// 构造一个信任所有ssl证书的httpclient
 			SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, new TrustStrategy() {
 				@Override
 				public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
@@ -85,28 +86,24 @@ public class HttpClientDownloader extends AbstractDownloader {
 			}).build();
 			SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext);
 			socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-			           .register("http", PlainConnectionSocketFactory.getSocketFactory())  
-			           .register("https", sslsf)  
-			           .build();
-		} catch(Exception ex) {
+					.register("http", PlainConnectionSocketFactory.getSocketFactory()).register("https", sslsf).build();
+		} catch (Exception ex) {
 			socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-            .register("http", PlainConnectionSocketFactory.getSocketFactory())
-            .register("https", SSLConnectionSocketFactory.getSocketFactory())
-            .build();
+					.register("http", PlainConnectionSocketFactory.getSocketFactory())
+					.register("https", SSLConnectionSocketFactory.getSocketFactory()).build();
 		}
 		RequestConfig clientConfig = RequestConfig.custom().setRedirectsEnabled(false).build();
-		PoolingHttpClientConnectionManager syncConnectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+		PoolingHttpClientConnectionManager syncConnectionManager = new PoolingHttpClientConnectionManager(
+				socketFactoryRegistry);
 		syncConnectionManager.setMaxTotal(1000);
 		syncConnectionManager.setDefaultMaxPerRoute(50);
-		httpClient = HttpClientBuilder.create()
-				.setDefaultRequestConfig(clientConfig)
-				.setConnectionManager(syncConnectionManager)
-				.setRetryHandler(new HttpRequestRetryHandler() {
+		httpClient = HttpClientBuilder.create().setDefaultRequestConfig(clientConfig)
+				.setConnectionManager(syncConnectionManager).setRetryHandler(new HttpRequestRetryHandler() {
 					@Override
 					public boolean retryRequest(IOException exception, int executionCount, HttpContext context) {
 						int retryCount = SpiderThreadLocal.get().getEngine().getRetry();
 						boolean retry = (executionCount <= retryCount);
-						if(log.isDebugEnabled() && retry) {
+						if (log.isDebugEnabled() && retry) {
 							log.debug("retry : " + executionCount);
 						}
 						return retry;
@@ -116,16 +113,16 @@ public class HttpClientDownloader extends AbstractDownloader {
 
 	@Override
 	public HttpResponse download(HttpRequest request, int timeout) throws DownloadException {
-		if(log.isDebugEnabled()) {
+		if (log.isDebugEnabled()) {
 			log.debug("downloading..." + request.getUrl());
 		}
 		HttpRequestBase reqObj = null;
-		if(request instanceof HttpPostRequest) {//post
-			HttpPostRequest post = (HttpPostRequest)request;
+		if (request instanceof HttpPostRequest) {// post
+			HttpPostRequest post = (HttpPostRequest) request;
 			reqObj = new HttpPost(post.getUrl());
-			//post fields
+			// post fields
 			List<NameValuePair> fields = new ArrayList<NameValuePair>();
-			for(Map.Entry<String, String> entry : post.getFields().entrySet()) {
+			for (Map.Entry<String, String> entry : post.getFields().entrySet()) {
 				NameValuePair nvp = new BasicNameValuePair(entry.getKey(), entry.getValue());
 				fields.add(nvp);
 			}
@@ -135,37 +132,36 @@ public class HttpClientDownloader extends AbstractDownloader {
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
-		} else {//get
+		} else {// get
 			reqObj = new HttpGet(request.getUrl());
 		}
-		//header
+		// header
 		boolean isMobile = SpiderThreadLocal.get().getEngine().isMobile();
 		reqObj.addHeader("User-Agent", UserAgent.getUserAgent(isMobile));
-		for(Map.Entry<String, String> entry : request.getHeaders().entrySet()) {
+		for (Map.Entry<String, String> entry : request.getHeaders().entrySet()) {
 			reqObj.setHeader(entry.getKey(), entry.getValue());
 		}
-		//request config
-		RequestConfig.Builder builder = RequestConfig.custom()
-		.setConnectionRequestTimeout(1000)//从连接池获取连接的超时时间
-		.setSocketTimeout(timeout)//获取内容的超时时间
-		.setConnectTimeout(timeout)//建立socket连接的超时时间
-		.setRedirectsEnabled(false);
-		//proxy
+		// request config
+		RequestConfig.Builder builder = RequestConfig.custom().setConnectionRequestTimeout(1000)// 从连接池获取连接的超时时间
+				.setSocketTimeout(timeout)// 获取内容的超时时间
+				.setConnectTimeout(timeout)// 建立socket连接的超时时间
+				.setRedirectsEnabled(false);
+		// proxy
 		HttpHost proxy = null;
 		Proxys proxys = ProxysContext.get();
 		boolean isProxy = ProxysContext.isEnableProxy();
-		if(proxys != null && isProxy) {
+		if (proxys != null && isProxy) {
 			proxy = proxys.getProxy();
-			if(proxy != null) {
-				log.debug("proxy:" + proxy.getHostName()+":"+proxy.getPort());
+			if (proxy != null) {
+				log.debug("proxy:" + proxy.getHostName() + ":" + proxy.getPort());
 				builder.setProxy(proxy);
-				builder.setConnectTimeout(1000);//如果走代理，连接超时时间固定为1s
+				builder.setConnectTimeout(1000);// 如果走代理，连接超时时间固定为1s
 			}
 		}
 		reqObj.setConfig(builder.build());
-		//request and response
+		// request and response
 		try {
-			for(Map.Entry<String, String> entry : request.getCookies().entrySet()) {
+			for (Map.Entry<String, String> entry : request.getCookies().entrySet()) {
 				BasicClientCookie cookie = new BasicClientCookie(entry.getKey(), entry.getValue());
 				cookie.setPath("/");
 				cookie.setDomain(reqObj.getURI().getHost());
@@ -175,42 +171,42 @@ public class HttpClientDownloader extends AbstractDownloader {
 			int status = response.getStatusLine().getStatusCode();
 			HttpResponse resp = new HttpResponse();
 			resp.setStatus(status);
-			if(status == 302 || status == 301) {
+			if (status == 302 || status == 301) {
 				String redirectUrl = response.getFirstHeader("Location").getValue();
 				resp.setContent(UrlUtils.relative2Absolute(request.getUrl(), redirectUrl));
-			} else if(status == 200) {
+			} else if (status == 200) {
 				HttpEntity responseEntity = response.getEntity();
 				ByteArrayInputStream raw = toByteInputStream(responseEntity.getContent());
 				resp.setRaw(raw);
 				String contentType = null;
 				Header contentTypeHeader = responseEntity.getContentType();
-				if(contentTypeHeader != null) {
+				if (contentTypeHeader != null) {
 					contentType = contentTypeHeader.getValue();
 				}
 				resp.setContentType(contentType);
-				if(!isImage(contentType)) { 
+				if (ContentTypeUtils.isText(contentType)) {
 					String charset = getCharset(request.getCharset(), contentType);
 					resp.setCharset(charset);
-					//String content = EntityUtils.toString(responseEntity, charset);
+					// String content = EntityUtils.toString(responseEntity, charset);
 					String content = getContent(raw, responseEntity.getContentLength(), charset);
 					resp.setContent(content);
 				}
 			} else {
-				//404，500等
-				if(proxy != null) {
+				// 404，500等
+				if (proxy != null) {
 					proxys.failure(proxy.getHostName(), proxy.getPort());
 				}
 				throw new DownloadServerException("" + status);
 			}
-			if(proxy != null) {
+			if (proxy != null) {
 				proxys.success(proxy.getHostName(), proxy.getPort());
 			}
 			return resp;
-		} catch(ConnectTimeoutException | SocketTimeoutException e) {
+		} catch (ConnectTimeoutException | SocketTimeoutException e) {
 			throw new DownloadTimeoutException(e);
-		} catch(IOException e) {
-			//超时等
-			if(proxy != null) {
+		} catch (IOException e) {
+			// 超时等
+			if (proxy != null) {
 				proxys.failure(proxy.getHostName(), proxy.getPort());
 			}
 			throw new DownloadException(e);
@@ -218,7 +214,7 @@ public class HttpClientDownloader extends AbstractDownloader {
 			reqObj.releaseConnection();
 		}
 	}
-	
+
 	@Override
 	public void shutdown() {
 		try {
@@ -227,35 +223,35 @@ public class HttpClientDownloader extends AbstractDownloader {
 			httpClient = null;
 		}
 	}
-	
+
 	public String getContent(InputStream instream, long contentLength, String charset) throws IOException {
 		try {
 			if (instream == null) {
-	            return null;
-	        }
-	        int i = (int)contentLength;
-	        if (i < 0) {
-	            i = 4096;
-	        }
-	        Reader reader = new InputStreamReader(instream, charset);
-	        CharArrayBuffer buffer = new CharArrayBuffer(i);
-	        char[] tmp = new char[1024];
-	        int l;
-	        while((l = reader.read(tmp)) != -1) {
-	            buffer.append(tmp, 0, l);
-	        }
-	        return buffer.toString();
+				return null;
+			}
+			int i = (int) contentLength;
+			if (i < 0) {
+				i = 4096;
+			}
+			Reader reader = new InputStreamReader(instream, charset);
+			CharArrayBuffer buffer = new CharArrayBuffer(i);
+			char[] tmp = new char[1024];
+			int l;
+			while ((l = reader.read(tmp)) != -1) {
+				buffer.append(tmp, 0, l);
+			}
+			return buffer.toString();
 		} finally {
 			instream.reset();
 		}
-        
-    }
-	
+
+	}
+
 	private boolean isImage(String contentType) {
-		if(contentType == null) {
+		if (contentType == null) {
 			return false;
 		}
-		if(contentType.toLowerCase().startsWith("image")) {
+		if (contentType.toLowerCase().startsWith("image")) {
 			return true;
 		}
 		return false;

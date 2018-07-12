@@ -5,6 +5,7 @@ import org.reflections.Reflections;
 import net.sf.cglib.proxy.Enhancer;
 
 import com.geccocrawler.gecco.monitor.RenderMointorIntercetor;
+import com.geccocrawler.gecco.spider.render.file.FileRender;
 import com.geccocrawler.gecco.spider.render.html.HtmlRender;
 import com.geccocrawler.gecco.spider.render.json.JsonRender;
 
@@ -28,6 +29,14 @@ public class MonitorRenderFactory extends RenderFactory {
 		enhancer.setSuperclass(JsonRender.class);
 		enhancer.setCallback(new RenderMointorIntercetor());
 		return (JsonRender)enhancer.create();
+	}
+
+	@Override
+	public FileRender createFileRender() {
+		Enhancer enhancer = new Enhancer();
+		enhancer.setSuperclass(FileRender.class);
+		enhancer.setCallback(new RenderMointorIntercetor());
+		return (FileRender)enhancer.create();
 	}
 	
 	
