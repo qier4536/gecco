@@ -11,7 +11,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.reflections.ReflectionUtils;
 
-import com.geccocrawler.gecco.annotation.FileRootPath;
+import com.geccocrawler.gecco.annotation.FileSavePath;
 import com.geccocrawler.gecco.annotation.HtmlField;
 import com.geccocrawler.gecco.annotation.Image;
 import com.geccocrawler.gecco.downloader.DownloaderContext;
@@ -32,7 +32,7 @@ public class FileFieldRender implements FieldRender {
 	public void render(HttpRequest request, HttpResponse response, BeanMap beanMap, SpiderBean bean) {
 		Map<String, Object> fieldMap = new HashMap<String, Object>();
 		Set<Field> rootPathFields = ReflectionUtils.getAllFields(bean.getClass(),
-				ReflectionUtils.withAnnotation(FileRootPath.class));
+				ReflectionUtils.withAnnotation(FileSavePath.class));
 		for (Field rootField : rootPathFields) {
 			Object value = injectFileField(request, response, rootField);
 			if (value != null) {
@@ -44,7 +44,7 @@ public class FileFieldRender implements FieldRender {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Object injectFileField(HttpRequest request, HttpResponse response, Field field) {
-		FileRootPath rootPath = field.getAnnotation(FileRootPath.class);
+		FileSavePath rootPath = field.getAnnotation(FileSavePath.class);
 		String path = rootPath.rootPath();
 		if (!path.endsWith(File.separator)) {
 			path = path + File.separator;
