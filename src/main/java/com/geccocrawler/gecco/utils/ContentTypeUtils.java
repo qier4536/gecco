@@ -2,6 +2,11 @@ package com.geccocrawler.gecco.utils;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * 
+ * @author liqi
+ *
+ */
 public class ContentTypeUtils {
 
 	/**
@@ -36,7 +41,6 @@ public class ContentTypeUtils {
 			if (lowContentType.indexOf(string.toLowerCase()) > -1) {
 				return true;
 			}
-
 		}
 		return false;
 	}

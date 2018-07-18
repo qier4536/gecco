@@ -9,11 +9,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.reflections.ReflectionUtils;
 
+import com.geccocrawler.gecco.annotation.CustomScheduler;
 import com.geccocrawler.gecco.annotation.FieldRenderName;
 import com.geccocrawler.gecco.annotation.Href;
 import com.geccocrawler.gecco.request.HttpRequest;
 import com.geccocrawler.gecco.response.HttpResponse;
 import com.geccocrawler.gecco.scheduler.DeriveSchedulerContext;
+import com.geccocrawler.gecco.scheduler.Scheduler;
 import com.geccocrawler.gecco.spider.SpiderBean;
 import com.geccocrawler.gecco.utils.ReflectUtils;
 
@@ -26,7 +28,7 @@ import net.sf.cglib.beans.BeanMap;
  *
  */
 public abstract class AbstractRender implements Render {
-	
+
 	private static Log log = LogFactory.getLog(AbstractRender.class);
 
 	/**
@@ -58,7 +60,8 @@ public abstract class AbstractRender implements Render {
 			requestFieldRender.render(request, response, beanMap, bean);
 			requestParameterFieldRender.render(request, response, beanMap, bean);
 			fieldRender(request, response, beanMap, bean);
-			Set<Field> customFields = ReflectionUtils.getAllFields(bean.getClass(),	ReflectionUtils.withAnnotation(FieldRenderName.class));
+			Set<Field> customFields = ReflectionUtils.getAllFields(bean.getClass(),
+					ReflectionUtils.withAnnotation(FieldRenderName.class));
 			for (Field customField : customFields) {
 				FieldRenderName fieldRender = customField.getAnnotation(FieldRenderName.class);
 				String name = fieldRender.value();
@@ -69,8 +72,8 @@ public abstract class AbstractRender implements Render {
 			}
 			requests(request, bean);
 			return bean;
-		} catch(Exception ex) {
-			//throw new RenderException(ex.getMessage(), clazz);
+		} catch (Exception ex) {
+			// throw new RenderException(ex.getMessage(), clazz);
 			log.error("instance SpiderBean error", ex);
 			return null;
 		}
@@ -84,6 +87,12 @@ public abstract class AbstractRender implements Render {
 	@Override
 	@SuppressWarnings({ "unchecked" })
 	public void requests(HttpRequest request, SpiderBean bean) {
+		// 使用自定义计划，将不再执行后续过程
+		boolean isCustomScheduler = isCustomScheduler(request, bean);
+		if (isCustomScheduler) {
+			return;
+		}
+
 		BeanMap beanMap = BeanMap.create(bean);
 		Set<Field> hrefFields = ReflectionUtils.getAllFields(bean.getClass(),
 				ReflectionUtils.withAnnotation(Href.class));
@@ -110,6 +119,33 @@ public abstract class AbstractRender implements Render {
 				}
 			}
 		}
+	}
+
+	/**
+	 * 是否有用户自定义的scheduler
+	 * 
+	 * @param request
+	 * @param bean
+	 * @return
+	 */
+	public boolean isCustomScheduler(HttpRequest request, SpiderBean bean) {
+		BeanMap beanMap = BeanMap.create(bean);
+		Set<Field> schedulerFields = ReflectionUtils.getAllFields(bean.getClass(),
+				ReflectionUtils.withAnnotation(CustomScheduler.class));
+		if (schedulerFields.size() > 1) {
+			throw new RuntimeException(
+					"this class only have one annotation @CustomScheduler，class is " + bean.getClass());
+		}
+		for (Field field : schedulerFields) {
+			Object o = beanMap.get(field.getName());
+			boolean isScheduler = ReflectUtils.haveSuperType(o.getClass(), Scheduler.class);// 是Scheduler实现类型
+			if (isScheduler) {
+				Scheduler scheduler = (Scheduler) o;
+				DeriveSchedulerContext.setSpiderScheduler(scheduler);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void setCustomFieldRenderFactory(CustomFieldRenderFactory customFieldRenderFactory) {

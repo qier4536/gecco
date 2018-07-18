@@ -5,6 +5,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+
 public class Conversion {
 
 	@SuppressWarnings({ "rawtypes" })
@@ -23,6 +26,8 @@ public class Conversion {
 		TYPE_HANDLERS.put(boolean.class, new BooleanTypeHandle());
 		TYPE_HANDLERS.put(Date.class, new DateTypeHandle());
 		TYPE_HANDLERS.put(BigDecimal.class, new BigDecimalTypeHandle());
+		TYPE_HANDLERS.put(JSONArray.class, new JsonArrayTypeHandle());
+		TYPE_HANDLERS.put(JSONObject.class, new JsonObjectTypeHandle());
 	}
 
 	@SuppressWarnings({ "rawtypes" })
