@@ -5,6 +5,7 @@ import org.reflections.Reflections;
 import com.geccocrawler.gecco.spider.render.file.FileRender;
 import com.geccocrawler.gecco.spider.render.html.HtmlRender;
 import com.geccocrawler.gecco.spider.render.json.JsonRender;
+import com.geccocrawler.gecco.spider.render.xml.XmlRender;
 
 public class DefaultRenderFactory extends RenderFactory {
 	
@@ -22,6 +23,11 @@ public class DefaultRenderFactory extends RenderFactory {
 
 	public FileRender createFileRender() {
 		return new FileRender();
+	}
+
+	@Override
+	public XmlRender createXmlRender() {
+		return new XmlRender();
 	}
 	
 }

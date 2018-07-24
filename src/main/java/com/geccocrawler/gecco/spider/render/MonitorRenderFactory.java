@@ -8,6 +8,7 @@ import com.geccocrawler.gecco.monitor.RenderMointorIntercetor;
 import com.geccocrawler.gecco.spider.render.file.FileRender;
 import com.geccocrawler.gecco.spider.render.html.HtmlRender;
 import com.geccocrawler.gecco.spider.render.json.JsonRender;
+import com.geccocrawler.gecco.spider.render.xml.XmlRender;
 
 public class MonitorRenderFactory extends RenderFactory {
 
@@ -20,7 +21,7 @@ public class MonitorRenderFactory extends RenderFactory {
 		Enhancer enhancer = new Enhancer();
 		enhancer.setSuperclass(HtmlRender.class);
 		enhancer.setCallback(new RenderMointorIntercetor());
-		return (HtmlRender)enhancer.create();
+		return (HtmlRender) enhancer.create();
 	}
 
 	@Override
@@ -28,7 +29,7 @@ public class MonitorRenderFactory extends RenderFactory {
 		Enhancer enhancer = new Enhancer();
 		enhancer.setSuperclass(JsonRender.class);
 		enhancer.setCallback(new RenderMointorIntercetor());
-		return (JsonRender)enhancer.create();
+		return (JsonRender) enhancer.create();
 	}
 
 	@Override
@@ -36,9 +37,15 @@ public class MonitorRenderFactory extends RenderFactory {
 		Enhancer enhancer = new Enhancer();
 		enhancer.setSuperclass(FileRender.class);
 		enhancer.setCallback(new RenderMointorIntercetor());
-		return (FileRender)enhancer.create();
+		return (FileRender) enhancer.create();
 	}
-	
-	
-	
+
+	@Override
+	public XmlRender createXmlRender() {
+		Enhancer enhancer = new Enhancer();
+		enhancer.setSuperclass(XmlRender.class);
+		enhancer.setCallback(new RenderMointorIntercetor());
+		return (XmlRender) enhancer.create();
+	}
+
 }
