@@ -61,7 +61,7 @@ public class XPathUtil {
 			Object obj = root.selectSingleNode(xpath);
 			Object fieldValue = null;
 			if (obj != null) {
-				String text = ((Element) obj).getText();
+				String text = ((Element) obj).getStringValue();
 				try {
 					fieldValue = Conversion.getValue(field.getType(), text);
 					fieldMap.put(field.getName(), fieldValue);
@@ -121,7 +121,7 @@ public class XPathUtil {
 				Map<String, Object> map = new HashMap<>();
 				for (Object obj : ele.elements()) {
 					Element eleObj = (Element) obj;
-					map.put(eleObj.getName(), eleObj.getText());
+					map.put(eleObj.getName(), eleObj.getStringValue());
 				}
 				retObj = map;
 			} else if (isXmlBean) { // xmlbean类型
@@ -158,11 +158,11 @@ public class XPathUtil {
 				lsobj.add(bean);
 			} else { // list<string>,list<integer> 等基本类型对应的封装类型
 				Object listObj = node;
-				if(StringUtils.isNotBlank(listPath)) {
+				if (StringUtils.isNotBlank(listPath)) {
 					listObj = ele.selectSingleNode(listPath);
 				}
 				if (listObj != null) {
-					String text = ((Element)listObj).getText();
+					String text = ((Element) listObj).getStringValue();
 					try {
 						Object value = Conversion.getValue(genericClass, text);
 						lsobj.add(value);
