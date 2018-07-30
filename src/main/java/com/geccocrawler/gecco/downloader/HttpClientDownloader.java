@@ -22,6 +22,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpRequestRetryHandler;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -35,11 +36,16 @@ import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.cookie.CookieSpecProvider;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.impl.cookie.BestMatchSpecFactory;
+import org.apache.http.impl.cookie.BrowserCompatSpecFactory;
+import org.apache.http.impl.cookie.DefaultCookieSpecProvider;
+import org.apache.http.impl.cookie.RFC6265CookieSpecProvider;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContexts;
@@ -67,12 +73,15 @@ public class HttpClientDownloader extends AbstractDownloader {
 	private static Log log = LogFactory.getLog(HttpClientDownloader.class);
 
 	private CloseableHttpClient httpClient;
-
 	private HttpClientContext cookieContext;
 
 	public HttpClientDownloader() {
 
 		cookieContext = HttpClientContext.create();
+		Registry<CookieSpecProvider> registry = RegistryBuilder.<CookieSpecProvider>create()
+				.register(CookieSpecs.DEFAULT, new DefaultCookieSpecProvider())
+				.register(CookieSpecs.STANDARD, new RFC6265CookieSpecProvider()).build();
+		cookieContext.setCookieSpecRegistry(registry);
 		cookieContext.setCookieStore(new BasicCookieStore());
 
 		Registry<ConnectionSocketFactory> socketFactoryRegistry = null;

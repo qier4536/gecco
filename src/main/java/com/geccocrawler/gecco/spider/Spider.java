@@ -13,6 +13,7 @@ import com.geccocrawler.gecco.downloader.Downloader;
 import com.geccocrawler.gecco.downloader.DownloadException;
 import com.geccocrawler.gecco.downloader.DownloadTimeoutException;
 import com.geccocrawler.gecco.pipeline.Pipeline;
+import com.geccocrawler.gecco.request.HttpGetRequest;
 import com.geccocrawler.gecco.request.HttpRequest;
 import com.geccocrawler.gecco.response.HttpResponse;
 import com.geccocrawler.gecco.scheduler.Scheduler;
@@ -94,7 +95,8 @@ public class Spider implements Runnable {
 				if (currSpiderBeanClass == null) {// 如果无法匹配但是是302跳转，需要放入抓取队列继续抓取
 					response = defaultDownload(request);
 					if (response.getStatus() == 302 || response.getStatus() == 301) {
-						spiderScheduler.into(request.subRequest(response.getContent()));
+						HttpGetRequest redirectGet = new HttpGetRequest(response.getContent());
+						spiderScheduler.into(redirectGet);
 					} else {
 						log.error("cant't match url : " + request.getUrl());
 					}

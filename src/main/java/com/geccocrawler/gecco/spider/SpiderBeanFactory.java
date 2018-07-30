@@ -31,7 +31,8 @@ import com.geccocrawler.gecco.utils.UrlMatcher;
 
 /**
  * SpiderBean是爬虫渲染的JavaBean的统一接口类，所有Bean均继承该接口。SpiderBeanFactroy会根据请求的url地址，
- * 匹配相应的SpiderBean，同时生成该SpiderBean的上下文SpiderBeanContext. SpiderBeanContext包括需要改SpiderBean的渲染类
+ * 匹配相应的SpiderBean，同时生成该SpiderBean的上下文SpiderBeanContext.
+ * SpiderBeanContext包括需要改SpiderBean的渲染类
  * （目前支持HTML、JSON两种Bean的渲染方式）、下载前处理类、下载后处理类以及渲染完成后对SpiderBean的后续处理Pipeline。
  * 
  * @author huchengyi
@@ -69,13 +70,11 @@ public class SpiderBeanFactory {
 		if (StringUtils.isNotEmpty(classPath)) {
 			reflections = new Reflections(
 					ConfigurationBuilder.build("com.geccocrawler.gecco", classPath, GeccoClassLoader.get())
-							.setMetadataAdapter(new GeccoJavaReflectionAdapter())
-							.setExpandSuperTypes(false));
+							.setMetadataAdapter(new GeccoJavaReflectionAdapter()).setExpandSuperTypes(false));
 			// reflections = new Reflections("com.geccocrawler.gecco", classPath);
 		} else {
 			reflections = new Reflections(ConfigurationBuilder.build("com.geccocrawler.gecco", GeccoClassLoader.get())
-					.setMetadataAdapter(new GeccoJavaReflectionAdapter())
-					.setExpandSuperTypes(false));
+					.setMetadataAdapter(new GeccoJavaReflectionAdapter()).setExpandSuperTypes(false));
 			// reflections = new Reflections("com.geccocrawler.gecco");
 		}
 		dynamic();
@@ -114,8 +113,8 @@ public class SpiderBeanFactory {
 	@SuppressWarnings({ "unchecked" })
 	public void addSpiderBean(Class<?> spiderBeanClass) {
 		Gecco gecco = spiderBeanClass.getAnnotation(Gecco.class);
-		for(String matchUrl : gecco.matchUrl()) {
-		//String matchUrl = gecco.matchUrl();
+		for (String matchUrl : gecco.matchUrl()) {
+			// String matchUrl = gecco.matchUrl();
 			try {
 				// SpiderBean spider = (SpiderBean)spiderBeanClass.newInstance();
 				// 判断是不是SpiderBeanClass????
@@ -133,8 +132,8 @@ public class SpiderBeanFactory {
 
 	public void removeSpiderBean(Class<?> spiderBeanClass) {
 		Gecco gecco = spiderBeanClass.getAnnotation(Gecco.class);
-		for(String matchUrl : gecco.matchUrl()) {
-		//String matchUrl = gecco.matchUrl();
+		for (String matchUrl : gecco.matchUrl()) {
+			// String matchUrl = gecco.matchUrl();
 			try {
 				spiderBeans.remove(matchUrl);
 				spiderBeanContexts.remove(spiderBeanClass.getName());
@@ -198,8 +197,11 @@ public class SpiderBeanFactory {
 		if (ReflectUtils.haveSuperType(spiderBeanClass, JsonBean.class)) {
 			renderType = RenderType.JSON;
 		}
-		if(ReflectUtils.haveSuperType(spiderBeanClass, FileBean.class)) {
+		if (ReflectUtils.haveSuperType(spiderBeanClass, FileBean.class)) {
 			renderType = RenderType.File;
+		}
+		if (ReflectUtils.haveSuperType(spiderBeanClass, XmlBean.class)) {
+			renderType = RenderType.XML;
 		}
 		context.setRender(renderFactory.getRender(renderType));
 	}

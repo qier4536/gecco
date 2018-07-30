@@ -9,56 +9,63 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.alibaba.fastjson.JSON;
 
+/**
+ * parameters为geecc注解中marUrl中大括号"{}"匹配的参数。非request提交的参数。
+ * request请求参数见field
+ * 
+ * @author novelbio
+ *
+ */
 public abstract class AbstractHttpRequest implements HttpRequest, Comparable<HttpRequest>, Serializable {
-	
+
 	private static final long serialVersionUID = -7284636094595149962L;
 
 	private String url;
-	
+
 	private String charset;
-	
+
 	private Map<String, String> parameters;
-	
+
 	private Map<String, String> cookies;
-	
+
 	private Map<String, String> headers;
-	
+
 	private long priority;
-	
+
 	public AbstractHttpRequest() {
 		this.parameters = new HashMap<String, String>(1);
 		this.headers = new HashMap<String, String>(1);
 		this.cookies = new HashMap<String, String>(1);
 	}
-	
+
 	public AbstractHttpRequest(String url) {
 		this();
 		this.setUrl(url);
 	}
-	
+
 	@Override
 	public void clearHeader() {
-		Iterator<Map.Entry<String, String>> it = this.headers.entrySet().iterator();  
-        while(it.hasNext()){
-        	it.next();
-        	it.remove();
-        }
+		Iterator<Map.Entry<String, String>> it = this.headers.entrySet().iterator();
+		while (it.hasNext()) {
+			it.next();
+			it.remove();
+		}
 	}
 
 	@Override
 	public void clearCookie() {
-		Iterator<Map.Entry<String, String>> it = this.cookies.entrySet().iterator();  
-        while(it.hasNext()){  
-        	it.next();
-        	it.remove();
-        }
+		Iterator<Map.Entry<String, String>> it = this.cookies.entrySet().iterator();
+		while (it.hasNext()) {
+			it.next();
+			it.remove();
+		}
 	}
 
 	@Override
 	public void addCookie(String name, String value) {
 		cookies.put(name, value);
 	}
-	
+
 	@Override
 	public String getCookie(String name) {
 		return cookies.get(name);
@@ -68,7 +75,7 @@ public abstract class AbstractHttpRequest implements HttpRequest, Comparable<Htt
 	public void addParameter(String name, String value) {
 		parameters.put(name, value);
 	}
-	
+
 	@Override
 	public void setParameters(Map<String, String> parameters) {
 		this.parameters.putAll(parameters);
@@ -82,11 +89,11 @@ public abstract class AbstractHttpRequest implements HttpRequest, Comparable<Htt
 	@Override
 	public HttpRequest subRequest(String url) {
 		try {
-			HttpRequest request = (HttpRequest)clone();
+			HttpRequest request = (HttpRequest) clone();
 			request.setUrl(url);
 			request.refer(this.getUrl());
 			return request;
-		} catch(Exception ex) {
+		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 		return null;
@@ -104,11 +111,12 @@ public abstract class AbstractHttpRequest implements HttpRequest, Comparable<Htt
 
 	@Override
 	public Map<String, String> getHeaders() {
-		/*StringBuffer sb = new StringBuffer();
-		for(Map.Entry<String, String> entry : cookies.entrySet()) {
-			sb.append(entry.getKey()).append("=").append(entry.getValue()).append(";");
-		}
-		headers.put("Cookie", sb.toString());*/
+		/*
+		 * StringBuffer sb = new StringBuffer(); for(Map.Entry<String, String> entry :
+		 * cookies.entrySet()) {
+		 * sb.append(entry.getKey()).append("=").append(entry.getValue()).append(";"); }
+		 * headers.put("Cookie", sb.toString());
+		 */
 		return headers;
 	}
 
@@ -161,18 +169,18 @@ public abstract class AbstractHttpRequest implements HttpRequest, Comparable<Htt
 	}
 
 	/**
-	 * 数字小，优先级高  
+	 * 数字小，优先级高
 	 */
 	@Override
 	public int compareTo(HttpRequest o) {
 		return this.priority > o.getPriority() ? 1 : this.priority < o.getPriority() ? -1 : 0;
 	}
-	
+
 	@Override
 	protected Object clone() throws CloneNotSupportedException {
-		//通过json的序列号和反序列化实现对象的深度clone
-		String text = JSON.toJSONString(this); //序列化
-		HttpRequest request = JSON.parseObject(text, this.getClass()); //反序列化
+		// 通过json的序列号和反序列化实现对象的深度clone
+		String text = JSON.toJSONString(this); // 序列化
+		HttpRequest request = JSON.parseObject(text, this.getClass()); // 反序列化
 		return request;
 	}
 
