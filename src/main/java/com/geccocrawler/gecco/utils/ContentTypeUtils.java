@@ -12,13 +12,13 @@ public class ContentTypeUtils {
 	/**
 	 * 是否为文本类型<br>
 	 * 可以解析成文本的信息<br>
-	 * 带有"charset","text","json","javascript"的为text
+	 * 带有"charset","text","json","javascript","xml"的为text
 	 * 
 	 * @param contentType
 	 * @return
 	 */
 	public static boolean isText(String contentType) {
-		String[] arrStr = { "charset", "text", "json", "javascript" };
+		String[] arrStr = { "charset", "text", "json", "javascript", "xml" };
 		return contain(contentType, arrStr);
 	}
 
