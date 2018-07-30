@@ -27,15 +27,51 @@ public class XPathUtil {
 	public static final Logger logger = Logger.getLogger(XPathUtil.class);
 
 	/**
-	 * 从给定element中取得xpath指定的object<br>
-	 * 可以返回list，node，string等。具体情况和xml内容相关
+	 * 从给定element中取得xpath指定的value<br>
+	 * 使用element.getText(),不会获取自己元素的内容
 	 * 
 	 * @param ele
 	 * @param xpath
 	 * @return
 	 */
-	public static Object selectObject(Element ele, String xpath) {
-		Object ret = ele.selectObject(xpath);
+	public static String getValue(Element ele, String xpath) {
+		return getValue(ele, xpath, false);
+	}
+
+	/**
+	 * 从给定element中取得xpath指定的value<br>
+	 * 
+	 * @param ele
+	 * @param xpath
+	 * @param onlyText
+	 *            true取xml的内容，false取的xml下包括子集的内容
+	 * @return
+	 */
+	public static String getValue(Element ele, String xpath, boolean onlyText) {
+		Object obj = ele.selectObject(xpath);
+		String ret = null;
+		if (obj != null) {
+			if (obj instanceof Element) {
+				if (onlyText) {
+					ret = ((Element) obj).getText();
+				} else {
+					ret = ((Element) obj).getStringValue();
+				}
+			} else if (obj instanceof String) {
+				ret = (String) obj;
+			} else if (obj instanceof List) {
+				StringBuffer sb = new StringBuffer();
+				for (Object innerObj : (List) obj) {
+					if (!onlyText) {
+						String innerValue = ((Element) obj).getStringValue();
+						sb.append(innerValue);
+					}
+				}
+				ret = sb.toString();
+			} else {
+				ret = obj.toString();
+			}
+		}
 		return ret;
 	}
 
@@ -82,7 +118,7 @@ public class XPathUtil {
 					fieldMap.put(field.getName(), obj);
 				}
 			} catch (Exception e) {
-				logger.error("rend the xmlPathObject error!", e);
+				logger.error("rend the xmlPathObject error! fileName=" + field.getName(), e);
 			}
 		}
 		beanMap.putAll(fieldMap);
@@ -117,7 +153,9 @@ public class XPathUtil {
 			XPathObjct xpathObj = field.getAnnotation(XPathObjct.class);
 			String rootPath = xpathObj.rootPath();
 			Element ele = (Element) root.selectSingleNode(rootPath);
-			if (isMap) { // map类型
+			if (ele == null) { // 不存在
+				retObj = null;
+			} else if (isMap) { // map类型
 				Map<String, Object> map = new HashMap<>();
 				for (Object obj : ele.elements()) {
 					Element eleObj = (Element) obj;
