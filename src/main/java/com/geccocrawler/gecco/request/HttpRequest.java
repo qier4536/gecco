@@ -14,6 +14,12 @@ public interface HttpRequest extends Cloneable {
 	
 	public String getParameter(String name);
 	
+	public void addField(String name, String value);
+	
+	public void setFields(Map<String, String> fields);
+	
+	public String getField(String name);
+	
 	public Map<String, String> getParameters();
 	
 	public void addHeader(String name, String value);

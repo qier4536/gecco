@@ -16,6 +16,6 @@ public class HttpGetRequest extends AbstractHttpRequest {
 	}
 
 	public static HttpGetRequest fromJson(JSONObject request) {
-		return (HttpGetRequest)JSON.toJavaObject(request, HttpGetRequest.class);
+		return (HttpGetRequest) JSON.toJavaObject(request, HttpGetRequest.class);
 	}
 }

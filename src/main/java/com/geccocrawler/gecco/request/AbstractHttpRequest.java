@@ -10,8 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.alibaba.fastjson.JSON;
 
 /**
- * parameters为geecc注解中marUrl中大括号"{}"匹配的参数。非request提交的参数。
- * request请求参数见field
+ * parameters为geecc注解中marUrl中大括号"{}"匹配的参数。非request提交的参数。 request请求参数见field
  * 
  * @author novelbio
  *
@@ -26,6 +25,8 @@ public abstract class AbstractHttpRequest implements HttpRequest, Comparable<Htt
 
 	private Map<String, String> parameters;
 
+	private Map<String, String> fields;
+
 	private Map<String, String> cookies;
 
 	private Map<String, String> headers;
@@ -34,6 +35,7 @@ public abstract class AbstractHttpRequest implements HttpRequest, Comparable<Htt
 
 	public AbstractHttpRequest() {
 		this.parameters = new HashMap<String, String>(1);
+		this.fields = new HashMap<String, String>();
 		this.headers = new HashMap<String, String>(1);
 		this.cookies = new HashMap<String, String>(1);
 	}
@@ -84,6 +86,22 @@ public abstract class AbstractHttpRequest implements HttpRequest, Comparable<Htt
 	@Override
 	public String getParameter(String name) {
 		return parameters.get(name);
+	}
+
+	public Map<String, String> getFields() {
+		return fields;
+	}
+
+	public void setFields(Map<String, String> fields) {
+		this.fields = fields;
+	}
+
+	public void addField(String name, String field) {
+		fields.put(name, field);
+	}
+
+	public String getField(String name) {
+		return fields.get(name);
 	}
 
 	@Override
