@@ -3,7 +3,6 @@ package com.geccocrawler.gecco.spider.render.xml;
 import java.io.StringReader;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggerFactory;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
@@ -23,7 +22,8 @@ public class XPathFieldRender implements FieldRender {
 
 	@Override
 	public void render(HttpRequest request, HttpResponse response, BeanMap beanMap, SpiderBean bean) {
-		StringReader reader = new StringReader(response.getContent());
+		String xml = XPathUtil.replaceXmlns(response.getContent());
+		StringReader reader = new StringReader(xml);
 		SAXReader saxReader = new SAXReader();
 
 		Document document = null;

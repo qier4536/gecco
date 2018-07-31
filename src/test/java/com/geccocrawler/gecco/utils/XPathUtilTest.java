@@ -1,6 +1,7 @@
 package com.geccocrawler.gecco.utils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.StringReader;
 
@@ -13,7 +14,7 @@ import com.geccocrawler.gecco.utils.sub.SubXmlBean;
 
 public class XPathUtilTest {
 
-	private String xml = "<root><list>list1</list><list>list2</list><list>list3</list>"
+	private String xml = "<root xmlns=\"www.baic.com\"><list>list1</list><list>list2</list><list>list3</list>"
 			+ "<list1><sub1>lsSub11</sub1><sub2>lsSub12</sub2></list1><list1><sub1>lsSub21</sub1><sub2>lsSub22</sub2></list1>"
 			+ "<list1><sub1>lsSub31</sub1><sub2>lsSub32</sub2></list1><map><key1>value1</key1><key2>value2</key2></map>"
 			+ "<title>test Title</title>"
@@ -22,9 +23,13 @@ public class XPathUtilTest {
 
 	@Test
 	public void test() throws DocumentException {
+		
+		String xml = XPathUtil.replaceXmlns(this.xml);
+		
 		StringReader reader = new StringReader(xml);
 		SAXReader saxReader = new SAXReader();
 		Document document = saxReader.read(reader);
+		
 
 		SubXmlBean bean = new SubXmlBean();
 		XPathUtil.injectXmlBean(document.getRootElement(), bean);

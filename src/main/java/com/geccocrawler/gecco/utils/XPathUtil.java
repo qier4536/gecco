@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.reflections.ReflectionUtils;
@@ -213,5 +212,15 @@ public class XPathUtil {
 			}
 		}
 		return lsobj;
+	}
+
+	/**
+	 * 清除xml中的xmlns属性
+	 * 
+	 * @param xml
+	 * @return
+	 */
+	public static String replaceXmlns(String xml) {
+		return StringUtils.replace(xml, "xmlns", "_xmlns_");
 	}
 }
