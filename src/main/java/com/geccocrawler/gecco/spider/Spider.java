@@ -124,16 +124,16 @@ public class Spider implements Runnable {
 				log.error(request.getUrl() + " ERROR : " + ex.getClass().getName() + ex.getMessage());
 				// 如果使用代理无效，重新加入队列换其他代理再次抓取
 				if (ex instanceof DownloadTimeoutException) {
-					// //开启代理，并且获取代理不为null
-					// if(engine.isProxy() && engine.getProxysLoader().getProxy() != null) {
-					// log.debug(request.getUrl()+" ERROR : connect time out, again insert to
-					// scheduler!");
-					// spiderScheduler.into(request);
-					// }
-					spiderScheduler.into(request);
-					// 多等待一个抓取间隔
-					interval();
+					// 开启代理，并且获取代理不为null
+					if (engine.isProxy() && engine.getProxysLoader().getProxy() != null) {
+						log.debug(request.getUrl() + " ERROR : connect time out, again insert to scheduler!");
+						spiderScheduler.into(request);
+					}
 				}
+				// 异常后重试
+				spiderScheduler.into(request);
+				// 多等待一个抓取间隔
+				interval();
 
 			} finally {
 				if (response != null) {
