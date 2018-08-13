@@ -141,12 +141,6 @@ public class HtmlParser {
 
 	public Elements $(String selector) {
 		Elements elements = document.select(selector);
-		if (SpiderThreadLocal.get().getEngine().isDebug()) {
-			if (!selector.equalsIgnoreCase("script")) {
-				// log.debug("["+selector+"]--->["+elements+"]");
-				System.out.println("[" + selector + "]--->[" + elements + "]");
-			}
-		}
 		return elements;
 	}
 
