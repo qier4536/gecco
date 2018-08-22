@@ -24,6 +24,7 @@ public class Conversion {
 		TYPE_HANDLERS.put(double.class, new DoubleTypeHandle());
 		TYPE_HANDLERS.put(Boolean.class, new BooleanTypeHandle());
 		TYPE_HANDLERS.put(boolean.class, new BooleanTypeHandle());
+		TYPE_HANDLERS.put(String.class, new StringTypeHandle());
 		TYPE_HANDLERS.put(Date.class, new DateTypeHandle());
 		TYPE_HANDLERS.put(BigDecimal.class, new BigDecimalTypeHandle());
 		TYPE_HANDLERS.put(JSONArray.class, new JsonArrayTypeHandle());
