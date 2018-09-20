@@ -14,9 +14,9 @@ import com.geccocrawler.gecco.spider.render.AbstractRender;
  *
  */
 public class JsonRender extends AbstractRender {
-	
+
 	private JsonFieldRender jsonFieldRender;
-	
+
 	public JsonRender() {
 		super();
 		this.jsonFieldRender = new JsonFieldRender();

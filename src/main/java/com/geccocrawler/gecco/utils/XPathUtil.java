@@ -93,10 +93,10 @@ public class XPathUtil {
 		for (Field field : xpathFields) {
 			XPath annXpath = field.getAnnotation(XPath.class);
 			String xpath = annXpath.value();
-			Object obj = root.selectSingleNode(xpath);
+			Node obj = root.selectSingleNode(xpath);
 			Object fieldValue = null;
 			if (obj != null) {
-				String text = ((Element) obj).getStringValue();
+				String text = obj.getStringValue();
 				try {
 					fieldValue = Conversion.getValue(field.getType(), text);
 					fieldMap.put(field.getName(), fieldValue);
@@ -188,18 +188,17 @@ public class XPathUtil {
 		boolean isXmlBean = ReflectUtils.haveSuperType(genericClass, XmlBean.class);
 		List<Node> lsNodes = root.selectNodes(rootPath);
 		for (Node node : lsNodes) {
-			Element ele = (Element) node;
 			if (isXmlBean) { // list<xmlBean>类型处理
 				XmlBean bean = (XmlBean) genericClass.newInstance();
-				injectXmlBean(ele, bean);
+				injectXmlBean((Element) node, bean);
 				lsobj.add(bean);
 			} else { // list<string>,list<integer> 等基本类型对应的封装类型
-				Object listObj = node;
+				Node listObj = node;
 				if (StringUtils.isNotBlank(listPath)) {
-					listObj = ele.selectSingleNode(listPath);
+					listObj = node.selectSingleNode(listPath);
 				}
 				if (listObj != null) {
-					String text = ((Element) listObj).getStringValue();
+					String text = listObj.getStringValue();
 					try {
 						Object value = Conversion.getValue(genericClass, text);
 						lsobj.add(value);

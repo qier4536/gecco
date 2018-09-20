@@ -15,6 +15,7 @@ import org.reflections.ReflectionUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONException;
+import com.geccocrawler.gecco.annotation.JSONArrayPath;
 import com.geccocrawler.gecco.annotation.JSONPath;
 import com.geccocrawler.gecco.request.HttpRequest;
 import com.geccocrawler.gecco.response.HttpResponse;
@@ -37,7 +38,10 @@ public class JsonFieldRender implements FieldRender {
 	@SuppressWarnings({ "unchecked" })
 	public void render(HttpRequest request, HttpResponse response, BeanMap beanMap, SpiderBean bean) {
 		Map<String, Object> fieldMap = new HashMap<String, Object>();
-		Set<Field> jsonPathFields = ReflectionUtils.getAllFields(bean.getClass(), ReflectionUtils.withAnnotation(JSONPath.class));
+		Set<Field> jsonPathFields = ReflectionUtils.getAllFields(bean.getClass(),
+				ReflectionUtils.withAnnotation(JSONPath.class));
+		Set<Field> jsonArrPathFields = ReflectionUtils.getAllFields(bean.getClass(),
+				ReflectionUtils.withAnnotation(JSONArrayPath.class));
 		String jsonStr = response.getContent();
 		jsonStr = jsonp2Json(jsonStr);
 		if (jsonStr == null) {
@@ -47,12 +51,19 @@ public class JsonFieldRender implements FieldRender {
 			Object json = JSON.parse(jsonStr);
 			for (Field field : jsonPathFields) {
 				Object value = injectJsonField(request, field, json);
-				if(value != null) {
+				if (value != null) {
 					fieldMap.put(field.getName(), value);
 				}
 			}
-		} catch(JSONException ex) {
-			//throw new RenderException(ex.getMessage(), bean.getClass());
+
+			for (Field field : jsonArrPathFields) {
+				Object value = injectJsonArrField(request, field, json);
+				if (value != null) {
+					fieldMap.put(field.getName(), value);
+				}
+			}
+		} catch (JSONException ex) {
+			// throw new RenderException(ex.getMessage(), bean.getClass());
 			RenderException.log("json parse error : " + request.getUrl(), bean.getClass(), ex);
 		}
 		beanMap.putAll(fieldMap);
@@ -89,7 +100,7 @@ public class JsonFieldRender implements FieldRender {
 			}
 		} else {
 			if (ReflectUtils.haveSuperType(type, SpiderBean.class)) {
-				if(src == null) {
+				if (src == null) {
 					return null;
 				}
 				// spiderBean
@@ -101,12 +112,74 @@ public class JsonFieldRender implements FieldRender {
 		}
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Object injectJsonArrField(HttpRequest request, Field field, Object json) {
+		JSONArrayPath JSONArrayPath = field.getAnnotation(JSONArrayPath.class);
+		String arrPath = JSONArrayPath.arrayPath();
+		String valPath = JSONArrayPath.valuePath();
+		Class<?> type = field.getType();// 类属性的类
+		Object src = com.alibaba.fastjson.JSONPath.eval(json, arrPath);
+		boolean isArray = type.isArray();
+		boolean isList = ReflectUtils.haveSuperType(type, List.class);// 是List类型
+		if (isList) {
+			Type genericType = field.getGenericType();// 获得包含泛型的类型
+			Class genericClass = ReflectUtils.getGenericClass(genericType, 0);// 泛型类
+			if (ReflectUtils.haveSuperType(genericClass, SpiderBean.class)) {
+				// List<spiderBean>
+				return spiderBeanListRender(src, genericClass, request);
+			} else if (ReflectUtils.haveSuperType(genericClass, String.class)) {
+				// List<String>
+				return jsonArrRender(src, field, valPath);
+			} else {
+				return objectRender(src, field, valPath, json);
+			}
+		} else if (isArray) {
+			Class genericClass = type.getComponentType();
+			if (ReflectUtils.haveSuperType(genericClass, SpiderBean.class)) {
+				// SpiderBean[]
+				List<SpiderBean> list = spiderBeanListRender(src, genericClass, request);
+				SpiderBean[] a = (SpiderBean[]) Array.newInstance(genericClass, list.size());
+				return list.toArray(a);
+			} else if (ReflectUtils.haveSuperType(genericClass, String.class)) {
+				// String[]
+				return jsonArrRender(src, field, valPath).toArray();
+			} else {
+				// Object[]
+				return ((List<Object>) objectRender(src, field, valPath, json)).toArray();
+			}
+		} else {
+			if (ReflectUtils.haveSuperType(type, SpiderBean.class)) {
+				if (src == null) {
+					return null;
+				}
+				// spiderBean
+				return spiderBeanRender(src, type, request);
+			} else {
+				// Object
+				return objectRender(src, field, valPath, json);
+			}
+		}
+	}
+
+	@SuppressWarnings({ "rawtypes" })
+	private List<Object> jsonArrRender(Object src, Field field, String jsonPath) {
+		List<Object> list = new ArrayList<>();
+		JSONArray ja = (JSONArray) src;
+		for (Object jo : ja) {
+			if (jo != null) {
+				Object val = com.alibaba.fastjson.JSONPath.eval(jo, jsonPath);
+				list.add(val);
+			}
+		}
+		return list;
+	}
+
 	@SuppressWarnings({ "rawtypes" })
 	private List<SpiderBean> spiderBeanListRender(Object src, Class genericClass, HttpRequest request) {
 		List<SpiderBean> list = new ArrayList<SpiderBean>();
 		JSONArray ja = (JSONArray) src;
 		for (Object jo : ja) {
-			if(jo != null) {
+			if (jo != null) {
 				SpiderBean subBean = this.spiderBeanRender(jo, genericClass, request);
 				list.add(subBean);
 			}
@@ -118,7 +191,7 @@ public class JsonFieldRender implements FieldRender {
 	private SpiderBean spiderBeanRender(Object src, Class genericClass, HttpRequest request) {
 		HttpResponse subResponse = HttpResponse.createSimple(src.toString());
 		Render render = null;
-		if(ReflectUtils.haveSuperType(genericClass, JsonBean.class)) {
+		if (ReflectUtils.haveSuperType(genericClass, JsonBean.class)) {
 			render = RenderContext.getRender(RenderType.JSON);
 		} else {
 			render = RenderContext.getRender(RenderType.HTML);
@@ -129,13 +202,13 @@ public class JsonFieldRender implements FieldRender {
 
 	private Object objectRender(Object src, Field field, String jsonPath, Object json) {
 		if (src == null) {
-			//throw new FieldRenderException(field, jsonPath + " not found in : " + json);
+			// throw new FieldRenderException(field, jsonPath + " not found in : " + json);
 			FieldRenderException.log(field, jsonPath + " not found in : " + json);
 		}
 		try {
 			return Conversion.getValue(field.getType(), src);
 		} catch (Exception ex) {
-			//throw new FieldRenderException(field, "Conversion error : " + src, ex);
+			// throw new FieldRenderException(field, "Conversion error : " + src, ex);
 			FieldRenderException.log(field, "Conversion error : " + src, ex);
 		}
 		return null;
@@ -147,14 +220,14 @@ public class JsonFieldRender implements FieldRender {
 		}
 		jsonp = StringUtils.trim(jsonp);
 
-		if(jsonp.startsWith("try")||StringUtils.endsWith(jsonp, ")")){
-			if(jsonp.indexOf("catch")!=-1){
-				jsonp = jsonp.substring(0,jsonp.indexOf("catch"));
+		if (jsonp.startsWith("try") || StringUtils.endsWith(jsonp, ")")) {
+			if (jsonp.indexOf("catch") != -1) {
+				jsonp = jsonp.substring(0, jsonp.indexOf("catch"));
 			}
 			int fromIndex = jsonp.indexOf('(');
 			int toIndex = jsonp.lastIndexOf(')');
-			if(fromIndex!=-1&&toIndex!=-1){
-				jsonp = jsonp.substring(fromIndex+1,toIndex).trim();
+			if (fromIndex != -1 && toIndex != -1) {
+				jsonp = jsonp.substring(fromIndex + 1, toIndex).trim();
 				return jsonp;
 			}
 		}
@@ -163,11 +236,11 @@ public class JsonFieldRender implements FieldRender {
 			jsonp = StringUtils.substringBeforeLast(jsonp, ";");
 			jsonp = StringUtils.trim(jsonp);
 		}
-		/*if (StringUtils.endsWith(jsonp, ")")) {
-			String jsonStr = StringUtils.substring(jsonp, "(", ")");
-			jsonStr = StringUtils.trim(jsonStr);
-			return jsonStr;
-		}*/
+		/*
+		 * if (StringUtils.endsWith(jsonp, ")")) { String jsonStr =
+		 * StringUtils.substring(jsonp, "(", ")"); jsonStr = StringUtils.trim(jsonStr);
+		 * return jsonStr; }
+		 */
 		return jsonp;
 	}
 
