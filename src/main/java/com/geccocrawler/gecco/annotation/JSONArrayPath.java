@@ -24,10 +24,10 @@ public @interface JSONArrayPath {
 	String arrayPath();
 
 	/**
-	 * arrayＰath中哦功能对象为根，获取指定的字段
+	 * 以arrayPath中的对象为根，获取指定的字段
 	 * 
 	 * @return
 	 */
-	String valuePath();
+	String valuePath() default "";
 
 }
